@@ -1,14 +1,21 @@
 import dns from "dns";
 dns.setServers(["1.1.1.1"]);
-
-// require("dotenv").config({path:"./env"});
+import app from "./app.js";
 import dotenv from "dotenv";
 import connectDb from "./db/index.js";
 
 dotenv.config({ path: "./env" });
 
 
-connectDb();
+connectDb()
+.then(()=>{
+    app.listen(process.env.PORT || 8000,()=>{
+        console.log(`Server is running on http://localhost:${process.env.PORT}`);
+    });
+})
+.catch( (e)=>{
+    console.log(`MONGO DB CONNECTION FAILED: ${e}`);
+})
 
 
 
