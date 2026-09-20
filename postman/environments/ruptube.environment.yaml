@@ -1,0 +1,4 @@
+name: ruptube
+values:
+  - key: server
+    value: ''

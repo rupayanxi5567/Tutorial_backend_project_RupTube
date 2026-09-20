@@ -1,10 +1,11 @@
+import "dotenv/config";
 import dns from "dns";
 dns.setServers(["1.1.1.1"]);
-import app from "./app.js";
 import dotenv from "dotenv";
 import connectDb from "./db/index.js";
+import app from "./app.js";
 
-dotenv.config({ path: "./env" });
+dotenv.config({ path: "./.env" });
 
 
 connectDb()
