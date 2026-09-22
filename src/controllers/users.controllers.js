@@ -1,8 +1,9 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiErrors.js";
 import User from "../models/users.models.js";
-import upload_on_cloudinary from "../utils/cloudnary.js"
-import ApiResponse from "../utils/ApiResponse.js"
+import upload_on_cloudinary from "../utils/cloudnary.js";
+import ApiResponse from "../utils/ApiResponse.js";
+import jwt from "jsonwebtoken";
 
 let generateAccessAndRefreshToken = async (userId)=>{
     try {
@@ -156,4 +157,55 @@ let logoutUser = asyncHandler(async (req,res)=>{
 
 })
 
-export {registerUser,loginUser,logoutUser};
+
+let refreshAccessToken = asyncHandler(async (req,res)=>{
+    let incomingRefreshToken = req.cookie.refreshTokens || req.body.refreshTokens;
+
+    if(!incomingRefreshToken){
+        throw new ApiError(401,"Unauthorized request");
+    }
+
+
+    try {
+        let decodedToken = jwt.verify(incomingRefreshToken,process.env.REFRESH_TOKEN_SECRET);
+    
+        let user = await User.findById(decodedToken?._id);
+    
+        if(!user){
+            throw new ApiError(401,"Invalid refresh token");
+        }
+    
+        if(incomingRefreshToken !== user?.refreshTokens){
+            throw new ApiError(401,"Refresh token is expired/used");
+        }
+    
+        let options = {
+            httpOnly:true,
+            secure:true,
+        };
+    
+        let {newAcessToken,newRefreshToken} = await generateAccessAndRefreshToken(user._id);
+    
+        return res
+        .status(200)
+        .cookie("accessToken",newAcessToken,options)
+        .cookie("refreshToken",newRefreshToken,options)
+        .json(
+            new ApiResponse(
+                200,
+                {
+                    acessToken: newAcessToken,
+                    refreshToken: newRefreshToken,
+                },
+                "Access token refreshed"
+            )
+        )
+    } catch (e) {
+        throw new ApiError(401,e?.message || "Invalid refresh token");
+    }
+
+
+})
+
+
+export {refreshAccessToken,registerUser,loginUser,logoutUser};

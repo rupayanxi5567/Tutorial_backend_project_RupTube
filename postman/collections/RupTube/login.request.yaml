@@ -1,0 +1,14 @@
+$kind: http-request
+description: ""
+url: "{{server}}/users/logout"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"username\":\"rupayan_dey_1377_69\",\r
+
+    \    \"passwords\":\"1234\"\r
+
+    }"
+order: 3325541741529458

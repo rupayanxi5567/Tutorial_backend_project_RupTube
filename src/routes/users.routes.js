@@ -2,6 +2,7 @@ import { Router } from "express";
 import { loginUser, logoutUser, registerUser } from "../controllers/users.controllers.js";
 import {upload} from "../middlewares/multer.middlewares.js";
 import verifyJWT from "../middlewares/auth.middlewares.js";
+import { refreshAccessToken } from "../controllers/users.controllers.js";
 
 let router = Router();
 
@@ -22,6 +23,7 @@ router.route("/login").post(loginUser);
 
 // secured routes
 router.route("/logout").post(verifyJWT, logoutUser);
+router.route("/refresh-tokens").post(refreshAccessToken)
 
 
 
