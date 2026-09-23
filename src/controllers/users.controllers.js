@@ -227,7 +227,7 @@ let changeCurrentPassword = asyncHandler(async (req, res) => {
 let getCurrentUser = asyncHandler(async (req, res) => {
     return res
         .status(200)
-        .json(200, req.user, "Current User fetched successfully")
+        .json(new ApiResponse(200, req.user, "Current User fetched successfully"));
 })
 
 let updateUserDetails = asyncHandler(async (req, res) => {
@@ -235,7 +235,7 @@ let updateUserDetails = asyncHandler(async (req, res) => {
     if (!fullname && !email) {
         throw new ApiError(400, "Email and Fullname are required")
     }
-    let user = User.findByIdAndUpdate(
+    let user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
