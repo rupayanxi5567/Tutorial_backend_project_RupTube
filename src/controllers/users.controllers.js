@@ -252,52 +252,121 @@ let updateUserDetails = asyncHandler(async (req, res) => {
 
 })
 
-let updateUserAvatar = asyncHandler(async(req,res)=>{
+let updateUserAvatar = asyncHandler(async (req, res) => {
     let avatarLocalPath = req.file?.path;
-    if(!avatarLocalPath){
-        throw new ApiError(400,"Avatar file is missing");
+    if (!avatarLocalPath) {
+        throw new ApiError(400, "Avatar file is missing");
     }
     let avatar = await upload_on_cloudinary(avatarLocalPath);
-    if(!avatar.url){
-        throw new ApiError(400,"Error occured while uploading on Avatar");
+    if (!avatar.url) {
+        throw new ApiError(400, "Error occured while uploading on Avatar");
     }
     let user = await User.findByIdAndUpdate(
         req.user?._id,
         {
-            $set:{
-                avatar:avatar.url,
+            $set: {
+                avatar: avatar.url,
             }
         },
-        {new: true}
+        { new: true }
     ).select("-password");
 
     return res
-    .status(200)
-    .json(new ApiResponse(200,"Avatar updated successfully"));
+        .status(200)
+        .json(new ApiResponse(200, "Avatar updated successfully"));
 })
 
-let updateUserCoverImage = asyncHandler(async(req,res)=>{
+let updateUserCoverImage = asyncHandler(async (req, res) => {
     let coverImageLocalPath = req.file?.path;
-    if(!coverImageLocalPath){
-        throw new ApiError(400,"Cover Image file is missing");
+    if (!coverImageLocalPath) {
+        throw new ApiError(400, "Cover Image file is missing");
     }
     let coverImage = await upload_on_cloudinary(coverImageLocalPath);
-    if(!coverImage.url){
-        throw new ApiError(400,"Error occured while uploading on cover image");
+    if (!coverImage.url) {
+        throw new ApiError(400, "Error occured while uploading on cover image");
     }
     let user = await User.findByIdAndUpdate(
         req.user?._id,
         {
-            $set:{
-                coverImage:coverImage.url,
+            $set: {
+                coverImage: coverImage.url,
             }
         },
-        {new: true}
+        { new: true }
     ).select("-password");
 
     return res
+        .status(200)
+        .json(new ApiResponse(200, "Cover image updated successfully"));
+})
+
+let getUserChannelProfile = asyncHandler(async (req, res) => {
+    let { username } = req.params;
+    if (!username?.trim()) {
+        throw new ApiError(400, "username is missing");
+    }
+    let channel = await User.aggregate([
+        {
+            $match: {
+                username: username?.toLowerCase();
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "channel",
+                as: "subscribers",
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "subscribedTo",
+            }
+        },
+        {
+            $addFields: {
+                subscribersCount: {
+                    $size: "$subscribers"
+                },
+                subscribedToCount: {
+                    $size: "$subscribedTo"
+                },
+                isSubscribed: {
+                    $cond: {
+                        if: { $in: [req.user?._id, "$subscribers.subscriber"] },
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                fullname: 1,
+                username: 1,
+                subscribersCount: 1,
+                subscribedToCount: 1,
+                isSubscribed: 1,
+                avatar: 1,
+                coverImage: 1,
+                email: 1
+            }
+        }
+
+    ]);
+    if (!channel?.length) {
+        throw new ApiError(404, "Channel does not exist!!!");
+    }
+    return res
     .status(200)
-    .json(new ApiResponse(200,"Cover image updated successfully"));
+    .json(
+        new ApiResponse(200,channel[0],"User channel fetched successfully")
+    )
+
 })
 
 
@@ -307,4 +376,4 @@ let updateUserCoverImage = asyncHandler(async(req,res)=>{
 
 
 
-export { refreshAccessToken, registerUser, loginUser, logoutUser, changeCurrentPassword, getCurrentUser, updateUserDetails,updateUserAvatar, updateUserCoverImage };
+export { refreshAccessToken, registerUser, loginUser, logoutUser, changeCurrentPassword, getCurrentUser, updateUserDetails, updateUserAvatar, updateUserCoverImage, getUserChannelProfile };
