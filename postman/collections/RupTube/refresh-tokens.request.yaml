@@ -1,0 +1,8 @@
+$kind: http-request
+description: ""
+url: "{{server}}/users/refresh-tokens"
+method: POST
+body:
+  type: json
+  content: ""
+order: 4092882626645250
